@@ -1,16 +1,16 @@
 :root {
-    --bg-main: #f3f4f6;
-    --bg-card: #ffffff;
-    --bg-input: #ffffff;
+    --bg-main: #e3e6eb;
+    --bg-card: #f4f5f7;
+    --bg-input: #eceff3;
     --primary-blue: #E52820;
     --primary-green: #E52820;
     --text-main: #2f3a45;
-    --text-dim: #6c7784;
+    --text-dim: #5f6b78;
     --danger: #b91c1c;
-    --border-main: #e4e7ec;
+    --border-main: #cfd5dd;
     --header-line: #E52820;
-    --surface-muted: #f8fafc;
-    --surface-muted-strong: #eef1f5;
+    --surface-muted: #e9ecf0;
+    --surface-muted-strong: #dde2e8;
     --overlay-color: rgba(35, 39, 43, 0.7);
 }
 
@@ -36,6 +36,12 @@ body { font-family: 'Inter', sans-serif; background: var(--bg-main); margin: 0; 
 .login-box input { background: var(--bg-input); border: 1px solid var(--border-main); color: var(--text-main); padding: 12px; margin-bottom: 10px; width: 100%; box-sizing: border-box; border-radius: 4px; caret-color: var(--text-main); }
 .login-box input:focus { background: var(--surface-muted-strong); color: var(--text-main); outline: none; border-color: var(--primary-blue); box-shadow: 0 0 0 3px rgba(229, 40, 32, 0.12); }
 .login-box button { background: var(--primary-blue); color: white; border: none; padding: 12px; width: 100%; cursor: pointer; font-weight: bold; border-radius: 4px; }
+.login-box button.btn-link-login { background: transparent; color: var(--primary-blue); margin-top: 8px; }
+.regras-senha { list-style: none; margin: 0 0 10px; padding: 0; text-align: left; font-size: 0.85rem; }
+.regras-senha li { color: var(--text-main); opacity: 0.7; padding: 2px 0; }
+.regras-senha li::before { content: '✕ '; color: #d32f2f; font-weight: bold; }
+.regras-senha li.ok { opacity: 1; }
+.regras-senha li.ok::before { content: '✓ '; color: #2e7d32; }
 
 .brand-login {
     display: flex;

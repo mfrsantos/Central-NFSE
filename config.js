@@ -1,10 +1,10 @@
 // config.js - Configurações da aplicação
 export const firebaseConfig = {
-    apiKey: "AIzaSyD-mBgupzksWj93Jpu1itwBKky27Rzi-wU",
-    authDomain: "erp-green-tech.firebaseapp.com",
-    databaseURL: "https://erp-green-tech-default-rtdb.firebaseio.com",
-    projectId: "erp-green-tech",
-    appId: "1:147246687989:web:717ac874b7e485a76f47bc"
+    apiKey: "AIzaSyBudxppctZzLQoBL3Hk0A_8w794K2yKcoU",
+    authDomain: "central-notas-vaccinar.firebaseapp.com",
+    databaseURL: "https://central-notas-vaccinar-default-rtdb.firebaseio.com",
+    projectId: "central-notas-vaccinar",
+    appId: "1:1040489786676:web:73d70997865e527d770961"
 };
 
 export const deParaFilial = {

@@ -1,0 +1,33 @@
+{
+  "rules": {
+    ".read": false,
+    ".write": false,
+    "contas": {
+      ".read": "auth != null && !root.child('bloqueados').child(auth.uid).exists() && auth.token.email_verified === true && auth.token.email.matches(/.*@vaccinar\\.com\\.br$/) && root.child('usuarios_autorizados').child(auth.uid).val() === true",
+      "$contaId": {
+        ".write": "auth != null && !root.child('bloqueados').child(auth.uid).exists() && auth.token.email_verified === true && auth.token.email.matches(/.*@vaccinar\\.com\\.br$/) && root.child('usuarios_autorizados').child(auth.uid).val() === true",
+        ".validate": "newData.hasChildren(['tipo','local','pedido','codFor','fornecedor','cc','valor','vencimento','pagamento','status','mes']) && newData.child('tipo').isString() && newData.child('tipo').val().matches(/^(SERVICO|PRODUTO)$/) && newData.child('local').isString() && newData.child('local').val().length > 0 && newData.child('local').val().length <= 40 && newData.child('pedido').isString() && newData.child('pedido').val().length <= 30 && newData.child('codFor').isString() && newData.child('codFor').val().length <= 30 && newData.child('fornecedor').isString() && newData.child('fornecedor').val().length > 0 && newData.child('fornecedor').val().length <= 120 && newData.child('cc').isString() && newData.child('cc').val().length <= 60 && newData.child('valor').isNumber() && newData.child('valor').val() >= 0 && newData.child('valor').val() < 100000000 && newData.child('vencimento').isString() && newData.child('vencimento').val().length <= 10 && newData.child('pagamento').isString() && newData.child('pagamento').val().matches(/^(BOLETO|DEPOSITO)$/) && newData.child('status').isString() && newData.child('status').val().matches(/^(Pendente|Enviado ao CSC)$/) && newData.child('mes').isString() && newData.child('mes').val().matches(/^(JANEIRO|FEVEREIRO|MARÇO|ABRIL|MAIO|JUNHO|JULHO|AGOSTO|SETEMBRO|OUTUBRO|NOVEMBRO|DEZEMBRO)$/)"
+      }
+    },
+    "auditoria": {
+      ".read": false,
+      "$logId": {
+        ".write": "auth != null && !data.exists() && newData.exists() && !root.child('bloqueados').child(auth.uid).exists() && auth.token.email_verified === true && auth.token.email.matches(/.*@vaccinar\\.com\\.br$/) && root.child('usuarios_autorizados').child(auth.uid).val() === true",
+        ".validate": "newData.hasChildren(['ts','uid','email','acao','contaId']) && newData.child('uid').val() === auth.uid && newData.child('acao').isString() && newData.child('acao').val().matches(/^(CRIAR|ATUALIZAR|EXCLUIR)$/) && newData.child('ts').val() === now && newData.child('contaId').isString() && newData.child('contaId').val().length <= 60 && (!newData.child('detalhe').exists() || (newData.child('detalhe').isString() && newData.child('detalhe').val().length <= 500))",
+        "$other": { ".validate": "$other === 'ts' || $other === 'uid' || $other === 'email' || $other === 'acao' || $other === 'contaId' || $other === 'detalhe'" }
+      }
+    },
+    "usuarios_autorizados": {
+      "$uid": {
+        ".write": "auth != null && auth.uid === $uid && auth.token.email_verified === true && auth.token.email.matches(/.*@vaccinar\\.com\\.br$/) && !root.child('bloqueados').child(auth.uid).exists()",
+        ".validate": "newData.val() === true"
+      }
+    },
+    "usuarios": {
+      "$uid": {
+        ".write": "auth != null && auth.uid === $uid && !data.exists()",
+        ".validate": "newData.hasChildren(['email','criadoEm']) && newData.child('email').isString() && newData.child('email').val().length <= 120 && newData.child('criadoEm').isNumber()"
+      }
+    }
+  }
+}

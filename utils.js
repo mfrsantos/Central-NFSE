@@ -1,6 +1,19 @@
 // utils.js - Funções utilitárias
 export const fmtMoeda = (v) => new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(v);
 
+export const esc = (v) => String(v ?? '').replace(/[&<>"'`]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;', '`': '&#96;' }[c]));
+
+export const REGRAS_SENHA = [
+    { id: 'tamanho', texto: 'Mínimo de 10 caracteres', ok: (s) => s.length >= 10 },
+    { id: 'maiuscula', texto: 'Uma letra maiúscula', ok: (s) => /[A-Z]/.test(s) },
+    { id: 'numero', texto: 'Um número', ok: (s) => /\d/.test(s) },
+    { id: 'especial', texto: 'Um caractere especial (!@#$%&*+-.)', ok: (s) => /[!@#$%&*+\-.]/.test(s) }
+];
+
+export const senhaValida = (senha) => REGRAS_SENHA.every((r) => r.ok(senha));
+
+export const requisitosFaltantes = (senha) => REGRAS_SENHA.filter((r) => !r.ok(senha)).map((r) => r.texto);
+
 export const parseMoeda = (s) => {
     if (typeof s === 'number') return s;
     if (s == null) return 0;
@@ -71,13 +84,13 @@ export const mostrarNotificacao = (mensagem, tipo = 'sucesso', titulo = '', dura
     if (tipo === 'erro') icone = '✕';
     if (tipo === 'aviso') icone = '⚠';
 
-    const tituloHtml = titulo ? `<div class="notificacao-titulo">${titulo}</div>` : '';
+    const tituloHtml = titulo ? `<div class="notificacao-titulo">${esc(titulo)}</div>` : '';
     
     notificacao.innerHTML = `
         <div class="notificacao-icone">${icone}</div>
         <div class="notificacao-conteudo">
             ${tituloHtml}
-            <div class="notificacao-mensagem">${mensagem}</div>
+            <div class="notificacao-mensagem">${esc(mensagem)}</div>
         </div>
         <button class="notificacao-fechar">×</button>
     `;

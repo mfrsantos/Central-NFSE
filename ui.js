@@ -1,8 +1,8 @@
 // ui.js - Funções de interface
-import { fmtMoeda, mostrarErro, mostrarSucesso, mostrarAviso, parseCSV, parseMoeda, validarValor, validarData } from './utils.js';
-import { salvarItem, atualizarItem, removerItem, obterItem, verificarPedidoExistente } from './data.js';
+import { esc, fmtMoeda, REGRAS_SENHA, senhaValida, requisitosFaltantes, mostrarErro, mostrarSucesso, mostrarAviso, parseCSV, parseMoeda, validarValor, validarData } from './utils.js';
+import { carregarDados, salvarItem, atualizarItem, removerItem, obterItem, verificarPedidoExistente } from './data.js';
 import { listaMeses, emails, deParaFilial } from './config.js';
-import { login, logout } from './auth.js';
+import { login, logout, registrar, redefinirSenha } from './auth.js';
 
 let dadosCarregados = {};
 const THEME_STORAGE_KEY = 'erp_vaccinar_theme';
@@ -255,6 +255,14 @@ export const initUI = () => {
 
     // Event listeners
     document.getElementById('btnLogin').addEventListener('click', handleLogin);
+    document.getElementById('btnCadastrar').addEventListener('click', abrirModalCadastro);
+    document.getElementById('btnEsqueciSenha').addEventListener('click', abrirModalRedefinir);
+    document.getElementById('btnRedEnviar').addEventListener('click', handleEsqueciSenha);
+    document.getElementById('btnRedCancelar').addEventListener('click', fecharModalRedefinir);
+    document.getElementById('btnCadConfirmar').addEventListener('click', handleCadastrar);
+    document.getElementById('btnCadCancelar').addEventListener('click', fecharModalCadastro);
+    document.getElementById('cadSenha').addEventListener('input', atualizarRegrasSenha);
+    atualizarRegrasSenha();
     document.getElementById('btnLogout').addEventListener('click', handleLogout);
     document.getElementById('btnThemeToggle').addEventListener('click', alternarTema);
     document.getElementById('btnSalvarManual').addEventListener('click', handleSalvarManual);
@@ -281,7 +289,14 @@ export const initUI = () => {
     document.getElementById('inputBusca').addEventListener('input', renderizarDados);
 };
 
+let cancelarDados = null;
+
 export const onLogin = () => {
+    cancelarDados = carregarDados(setDados, async () => {
+        if (!cancelarDados) return;
+        mostrarAviso('Usuário sem acesso liberado. Solicite a liberação à TI informando seu e-mail.');
+        await handleLogout();
+    });
     document.getElementById('loginOverlay').style.display = 'none';
     document.getElementById('appContent').style.display = 'block';
     showLoading();
@@ -290,6 +305,11 @@ export const onLogin = () => {
 };
 
 export const onLogout = () => {
+    if (cancelarDados) cancelarDados();
+    cancelarDados = null;
+    dadosCarregados = {};
+    document.getElementById('loginEmail').value = '';
+    document.getElementById('loginPass').value = '';
     document.getElementById('loginOverlay').style.display = 'flex';
     document.getElementById('appContent').style.display = 'none';
 };
@@ -299,6 +319,72 @@ const handleLogin = async () => {
     const senha = document.getElementById('loginPass').value;
     try {
         await login(email, senha);
+    } catch (error) {
+        mostrarErro(error.message);
+    }
+};
+
+const atualizarRegrasSenha = () => {
+    const senha = document.getElementById('cadSenha').value;
+    const lista = document.getElementById('regrasSenha');
+    lista.innerHTML = '';
+    REGRAS_SENHA.forEach((regra) => {
+        const li = document.createElement('li');
+        li.textContent = regra.texto;
+        if (regra.ok(senha)) li.classList.add('ok');
+        lista.appendChild(li);
+    });
+};
+
+const abrirModalCadastro = () => {
+    document.getElementById('cadEmail').value = document.getElementById('loginEmail').value;
+    document.getElementById('cadSenha').value = '';
+    document.getElementById('cadSenha2').value = '';
+    atualizarRegrasSenha();
+    document.getElementById('cadastroOverlay').style.display = 'flex';
+    document.getElementById('cadEmail').focus();
+};
+
+const fecharModalCadastro = () => {
+    document.getElementById('cadastroOverlay').style.display = 'none';
+};
+
+const abrirModalRedefinir = () => {
+    document.getElementById('redEmail').value = document.getElementById('loginEmail').value;
+    document.getElementById('redefinirOverlay').style.display = 'flex';
+    document.getElementById('redEmail').focus();
+};
+
+const fecharModalRedefinir = () => {
+    document.getElementById('redefinirOverlay').style.display = 'none';
+};
+
+const handleEsqueciSenha = async () => {
+    const email = document.getElementById('redEmail').value;
+    try {
+        await redefinirSenha(email);
+        fecharModalRedefinir();
+        mostrarSucesso('Se o e-mail estiver cadastrado, enviamos um link para redefinir a senha. Verifique também o spam.');
+    } catch (error) {
+        mostrarErro(error.message);
+    }
+};
+
+const handleCadastrar = async () => {
+    const email = document.getElementById('cadEmail').value;
+    const senha = document.getElementById('cadSenha').value;
+    if (senha !== document.getElementById('cadSenha2').value) {
+        mostrarErro('As senhas não conferem');
+        return;
+    }
+    if (!senhaValida(senha)) {
+        mostrarAviso(`A senha não atende aos requisitos. Falta: ${requisitosFaltantes(senha).join('; ')}`);
+        return;
+    }
+    try {
+        await registrar(email, senha);
+        fecharModalCadastro();
+        mostrarSucesso('Cadastro realizado. Enviamos um link de confirmação ao seu e-mail; confirme-o e depois faça login.');
     } catch (error) {
         mostrarErro(error.message);
     }
@@ -621,7 +707,7 @@ const getTextoGrupo = (group) => {
 const criarLinhaGrupo = (texto, colSpan = 10) => {
     const tr = document.createElement('tr');
     tr.className = 'table-group-row';
-    tr.innerHTML = `<td colspan="${colSpan}">${texto}</td>`;
+    tr.innerHTML = `<td colspan="${colSpan}">${esc(texto)}</td>`;
     return tr;
 };
 
@@ -683,32 +769,32 @@ export const renderizarDados = () => {
             tr.classList.add(`row-grupo-${grupo}`);
             if (isEnv) tr.classList.add('row-enviada');
 
-            const tdPedido = `<td class="col-pedido"><input type="text" value="${item.pedido || ''}" class="input-tabela" onblur="atualizarCampo('${item.id}', 'pedido', this.value)"></td>`;
-            const tdValor = `<td class="col-valor">R$ <input type="text" value="${fmtMoeda(item.valor)}" class="input-tabela col-valor" onblur="atualizarCampo('${item.id}', 'valor', this.value)"></td>`;
+            const tdPedido = `<td class="col-pedido"><input type="text" value="${esc(item.pedido)}" class="input-tabela" onblur="atualizarCampo('${esc(item.id)}', 'pedido', this.value)"></td>`;
+            const tdValor = `<td class="col-valor">R$ <input type="text" value="${fmtMoeda(item.valor)}" class="input-tabela col-valor" onblur="atualizarCampo('${esc(item.id)}', 'valor', this.value)"></td>`;
 
             const tdPagamento = `<td>
-                    <select class="input-tabela" onchange="atualizarCampo('${item.id}', 'pagamento', this.value)">
+                    <select class="input-tabela" onchange="atualizarCampo('${esc(item.id)}', 'pagamento', this.value)">
                         <option value="BOLETO" ${item.pagamento === 'DEPOSITO' ? '' : 'selected'}>Boleto</option>
                         <option value="DEPOSITO" ${item.pagamento === 'DEPOSITO' ? 'selected' : ''}>Deposito</option>
                     </select>
                 </td>`;
 
             const htmlBase = `
-                <td>${item.local}</td>
+                <td>${esc(item.local)}</td>
                 ${tdPedido}
-                <td class="col-codfor">${item.codFor || ''}</td>
-                <td>${item.fornecedor}</td>
-                <td class="col-cc">${item.cc || ''}</td>
+                <td class="col-codfor">${esc(item.codFor)}</td>
+                <td>${esc(item.fornecedor)}</td>
+                <td class="col-cc">${esc(item.cc)}</td>
                 ${tdValor}
-                <td class="col-venc"><input type="text" value="${item.vencimento || ''}" class="input-tabela" onblur="atualizarCampo('${item.id}', 'vencimento', this.value)"></td>
+                <td class="col-venc"><input type="text" value="${esc(item.vencimento)}" class="input-tabela" onblur="atualizarCampo('${esc(item.id)}', 'vencimento', this.value)"></td>
                 ${tdPagamento}
-                <td><span class="status-badge ${isEnv ? 'status-enviado' : 'status-pendente'}">${item.status}</span></td>`;
+                <td><span class="status-badge ${isEnv ? 'status-enviado' : 'status-pendente'}">${esc(item.status)}</span></td>`;
 
             const acoes = `<td>
-                <button onclick="abrirModalItem('${item.id}')" class="btn-acao">
+                <button onclick="abrirModalItem('${esc(item.id)}')" class="btn-acao">
                     <i class="fas ${item.tipo === 'SERVICO' ? 'fa-paper-plane' : 'fa-copy'}"></i>
                 </button>
-                <button onclick="removerItemUI('${item.id}')" class="btn-acao-del"><i class="fas fa-trash"></i></button>
+                <button onclick="removerItemUI('${esc(item.id)}')" class="btn-acao-del"><i class="fas fa-trash"></i></button>
             </td>`;
 
             tr.innerHTML = htmlBase + acoes;

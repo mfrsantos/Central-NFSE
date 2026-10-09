@@ -1,13 +1,10 @@
 ﻿// app.js - Ponto de entrada da aplicação
 import { initAuth } from './auth.js';
-import { carregarDados } from './data.js';
-import { initUI, onLogin, onLogout, setDados } from './ui.js';
+import { initUI, onLogin, onLogout } from './ui.js';
+import { mostrarAviso } from './utils.js';
 
 // Inicializar autenticação
-initAuth(onLogin, onLogout);
+initAuth(onLogin, onLogout, mostrarAviso);
 
 // Inicializar interface
 initUI();
-
-// Carregar dados quando logado
-carregarDados(setDados);

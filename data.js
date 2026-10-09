@@ -1,27 +1,53 @@
 // data.js - Operações de dados com Firebase
-import { getDatabase, ref, push, onValue, remove, update, get } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+import { getDatabase, ref, push, onValue, remove, update, get, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getAuth } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 import { firebaseConfig } from './config.js';
 
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 const contasRef = ref(db, 'contas');
 
-export const carregarDados = (callback) => {
-    onValue(contasRef, (snap) => {
+// Falha na auditoria não desfaz a operação já concluída
+const registrarAuditoria = async (acao, contaId, detalhe) => {
+    try {
+        const user = getAuth(app).currentUser;
+        if (!user) return;
+        await push(ref(db, 'auditoria'), {
+            ts: serverTimestamp(),
+            uid: user.uid,
+            email: user.email || '',
+            acao,
+            contaId,
+            detalhe: String(detalhe || '').slice(0, 500)
+        });
+    } catch (error) {
+        console.warn('Falha ao registrar auditoria:', error);
+    }
+};
+
+const resumirItem = (item) => item
+    ? `${item.tipo || ''} | pedido ${item.pedido || '-'} | ${item.fornecedor || '-'} | valor ${item.valor ?? '-'} | ${item.mes || '-'}`
+    : '';
+
+export const carregarDados = (callback, onError) => {
+    return onValue(contasRef, (snap) => {
         const data = snap.val();
         callback(data);
     }, (error) => {
         console.error("Erro ao carregar dados:", error);
+        if (onError) onError(error);
     });
 };
 
 export const salvarItem = async (item) => {
+    let novoId = null;
     try {
-        await push(contasRef, item);
+        novoId = (await push(contasRef, item)).key;
     } catch (error) {
         throw new Error('Erro ao salvar item');
     }
+    await registrarAuditoria('CRIAR', novoId, resumirItem(item));
 };
 
 export const atualizarItem = async (id, campo, valor) => {
@@ -32,14 +58,18 @@ export const atualizarItem = async (id, campo, valor) => {
     } catch (error) {
         throw new Error('Erro ao atualizar item');
     }
+    await registrarAuditoria('ATUALIZAR', id, JSON.stringify(dados));
 };
 
 export const removerItem = async (id) => {
+    let anterior = null;
     try {
+        anterior = (await get(ref(db, `contas/${id}`))).val();
         await remove(ref(db, `contas/${id}`));
     } catch (error) {
         throw new Error('Erro ao remover item');
     }
+    await registrarAuditoria('EXCLUIR', id, resumirItem(anterior));
 };
 
 export const obterItem = async (id) => {

@@ -17,14 +17,38 @@
             <input type="email" id="loginEmail" placeholder="E-mail" aria-label="E-mail para login">
             <input type="password" id="loginPass" placeholder="Senha" aria-label="Senha para login">
             <button id="btnLogin">ACESSAR SISTEMA</button>
+            <button id="btnCadastrar" type="button" class="btn-link-login">Criar novo usuário</button>
+            <button id="btnEsqueciSenha" type="button" class="btn-link-login">Esqueci minha senha</button>
         </div>
     </div>
+
+    <div id="cadastroOverlay" class="overlay" style="display:none; z-index:2100;">
+        <div class="login-box">
+            <h2>Cadastrar novo usuário</h2>
+            <input type="email" id="cadEmail" placeholder="E-mail corporativo (@vaccinar.com.br)" aria-label="E-mail do novo usuário" autocomplete="off">
+            <input type="password" id="cadSenha" placeholder="Senha" aria-label="Senha" autocomplete="new-password">
+            <ul id="regrasSenha" class="regras-senha"></ul>
+            <input type="password" id="cadSenha2" placeholder="Confirmar senha" aria-label="Confirmar senha" autocomplete="new-password">
+            <button id="btnCadConfirmar" type="button">CADASTRAR</button>
+            <button id="btnCadCancelar" type="button" class="btn-link-login">Cancelar</button>
+        </div>
+    </div>
+
+    <div id="redefinirOverlay" class="overlay" style="display:none; z-index:2100;">
+        <div class="login-box">
+            <h2>Redefinir senha</h2>
+            <input type="email" id="redEmail" placeholder="seu.nome@vaccinar.com.br" aria-label="E-mail corporativo" autocomplete="off">
+            <button id="btnRedEnviar" type="button">ENVIAR E-MAIL DE REDEFINIÇÃO</button>
+            <button id="btnRedCancelar" type="button" class="btn-link-login">Cancelar</button>
+        </div>
+    </div>
+
+    <div id="notificacaoContainer"></div>
 
     <div id="appContent" style="display:none;">
         <div id="loadingIndicator" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); z-index:1000;">
             <div class="loading"></div> Carregando...
         </div>
-        <div id="notificacaoContainer"></div>
         
         <header>
             <div class="header-top">
