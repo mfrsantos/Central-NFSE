@@ -1,7 +1,7 @@
 // ui.js - Funções de interface
 import { esc, fmtMoeda, REGRAS_SENHA, senhaValida, requisitosFaltantes, mostrarErro, mostrarSucesso, mostrarAviso, parseCSV, parseMoeda, validarValor, validarData } from './utils.js';
-import { carregarDados, salvarItem, atualizarItem, removerItem, obterItem, verificarPedidoExistente } from './data.js';
-import { listaMeses, emails, deParaFilial } from './config.js';
+import { carregarDados, carregarEmails, salvarItem, atualizarItem, removerItem, obterItem, verificarPedidoExistente } from './data.js';
+import { listaMeses, deParaFilial } from './config.js';
 import { login, logout, registrar, redefinirSenha } from './auth.js';
 
 let dadosCarregados = {};
@@ -290,8 +290,11 @@ export const initUI = () => {
 };
 
 let cancelarDados = null;
+// Destinatários ficam no banco (configuracao/emails), fora do código público
+let emails = {};
 
 export const onLogin = () => {
+    carregarEmails().then((e) => { emails = e; }).catch((err) => console.warn('Falha ao carregar destinatários:', err));
     cancelarDados = carregarDados(setDados, async () => {
         if (!cancelarDados) return;
         mostrarAviso('Usuário sem acesso liberado. Solicite a liberação à TI informando seu e-mail.');
@@ -823,6 +826,7 @@ export const renderizarDados = () => {
             corpoEmail += `${i.local} - Pedido: ${i.pedido || ''} - Fornecedor: ${i.codFor || ''} - ${i.fornecedor} - Valor: R$ ${fmtMoeda(i.valor)} - C/C: ${i.cc || ''} - Venc.: ${i.vencimento || ''}.\n`;
         });
 
+        if (!emails.aprovacao) return mostrarErro("Destinatários de e-mail não configurados.");
         window.location.href = `mailto:${emails.aprovacao}?cc=${emails.ccAprovacao}&subject=Pedidos aguardando aprovação&body=${encodeURIComponent(corpoEmail)}`;
     };
 };
@@ -852,6 +856,7 @@ window.abrirModalItem = async (id) => {
         if (item.tipo === 'SERVICO') {
             abrirModal("Tratar Serviço", corpoEmail, [
                 { txt: "ENVIAR E-MAIL", cl: "btn-primary-modal", fn: () => {
+                    if (!emails.servicos) return mostrarErro("Destinatários de e-mail não configurados.");
                     window.location.href = `mailto:${emails.servicos}?cc=${emails.ccServicos}&subject=${encodeURIComponent(assunto)}&body=${encodeURIComponent(corpoEmail)}`;
                     atualizarItem(id, 'status', 'Enviado ao CSC');
                     fecharModal();

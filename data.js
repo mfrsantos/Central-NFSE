@@ -40,6 +40,11 @@ export const carregarDados = (callback, onError) => {
     });
 };
 
+export const carregarEmails = async () => {
+    const snap = await get(ref(db, 'configuracao/emails'));
+    return snap.val() || {};
+};
+
 export const salvarItem = async (item) => {
     let novoId = null;
     try {

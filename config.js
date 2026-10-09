@@ -18,13 +18,6 @@ export const deParaFilial = {
     "010091": "NOVA PONTE"
 };
 
-export const emails = {
-    servicos: "servicos@vaccinar.com.br",
-    ccServicos: "nfe.ti@vaccinar.com.br;contasapagar@vaccinar.com.br",
-    aprovacao: "juliana.lopes@vaccinar.com.br",
-    ccAprovacao: "marcus.tonini@vaccinar.com.br"
-};
-
 export const listaMeses = ["JANEIRO", "FEVEREIRO", "MARÇO", "ABRIL", "MAIO", "JUNHO", "JULHO", "AGOSTO", "SETEMBRO", "OUTUBRO", "NOVEMBRO", "DEZEMBRO"];
 
 export const filiais = ["MATRIZ", "ARAGUAINA", "GOIANIRA", "BOM DESPACHO", "TOLEDO", "PINHAIS", "NOVA PONTE"];
