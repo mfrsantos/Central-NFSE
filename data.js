@@ -56,9 +56,9 @@ export const salvarItem = async (item) => {
 };
 
 export const atualizarItem = async (id, campo, valor) => {
+    const dados = (typeof campo === 'object' && campo !== null) ? campo : { [campo]: valor };
     try {
         const dataRef = ref(db, `contas/${id}`);
-        const dados = (typeof campo === 'object' && campo !== null) ? campo : { [campo]: valor };
         await update(dataRef, dados);
     } catch (error) {
         throw new Error('Erro ao atualizar item');
